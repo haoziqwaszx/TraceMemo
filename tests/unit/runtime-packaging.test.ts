@@ -290,6 +290,7 @@ describe('production runtime packaging', () => {
     })
     expect(config.extraResources.map((item) => item.to)).toEqual([
       'resources',
+      'extension-templates',
       'app-update.yml',
       'skill/tracememo-reader'
     ])
@@ -314,8 +315,8 @@ describe('production runtime packaging', () => {
 
   it('supports isolated macOS staging and output roots without changing defaults', () => {
     expect(resolveEditionRoots('/repo', {})).toEqual({
-      stageRoot: '/repo/build/mac-staging',
-      outputRoot: '/repo/dist/mac'
+      stageRoot: resolve('/repo', 'build/mac-staging'),
+      outputRoot: resolve('/repo', 'dist/mac')
     })
     expect(
       resolveEditionRoots('/repo', {
@@ -323,8 +324,8 @@ describe('production runtime packaging', () => {
         TRACEMEMO_MAC_OUTPUT_ROOT: '/tmp/candidate/output'
       })
     ).toEqual({
-      stageRoot: '/tmp/candidate/staging',
-      outputRoot: '/tmp/candidate/output'
+      stageRoot: resolve('/tmp/candidate/staging'),
+      outputRoot: resolve('/tmp/candidate/output')
     })
   })
 

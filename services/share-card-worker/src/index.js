@@ -176,8 +176,8 @@ fetch('/api/wx-signature?url='+encodeURIComponent(location.href.split('#')[0]))
   )
 }
 
-const viewPage = (env, card) => {
-  const origin = String(env.PUBLIC_ORIGIN).replace(/\/+$/, '')
+const viewPage = (request, env, card) => {
+  const origin = publicOrigin(request, env)
   return new Response(
     `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(card.title)}</title><style>*{box-sizing:border-box}body{margin:0;background:#eef2f0;color:#17201d;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}header{padding:20px;background:#fff;position:sticky;top:0;box-shadow:0 1px 8px #0001}h1{font-size:18px;margin:0 0 6px}p{margin:0;color:#68746f;font-size:13px}.image{display:block;width:min(100%,900px);height:auto;margin:20px auto;background:#fff}</style></head><body><header><h1>${escapeHtml(card.title)}</h1><p>${escapeHtml(card.description)} · 有效期至 ${escapeHtml(card.expiresAt.slice(0, 10))}</p></header><img class="image" src="${origin}/a/${card.id}/report" alt="${escapeHtml(card.title)}"></body></html>`,
     {
@@ -292,7 +292,7 @@ const router = async (request, env) => {
   if (route === 'l') {
     return Response.redirect(`${publicOrigin(request, env)}/v/${card.id}`, 302)
   }
-  return route === 's' ? sharePage(request, env, card) : viewPage(env, card)
+  return route === 's' ? sharePage(request, env, card) : viewPage(request, env, card)
 }
 
 const cleanup = async (env) => {

@@ -17,7 +17,8 @@ resources/runtime/darwin-arm64
 skills-lock.json
 *__screenshots__
 
-/AGENTS.md
+# AGENTS.md 作为官方入口需受 Git 跟踪（三端打包配置已显式 `!AGENTS.md` 排除）
+# /AGENTS.md
 /CLAUDE.md
 /.claude/
 /.workbuddy/

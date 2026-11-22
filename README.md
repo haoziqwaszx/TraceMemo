@@ -79,7 +79,7 @@ TraceMemo（迹忆）原名 **WechatExplorer** 是一款本地优先的微信数
 
 ## 💻 平台支持
 
-TraceMemo 2.5.1 支持：
+TraceMemo 2.7.0 支持：
 
 - **Windows x64**
 - **macOS Apple Silicon（M 系列 / arm64）**
@@ -169,6 +169,8 @@ TraceMemo 最早叫 **WechatExplorer**。
 
 ## 文档
 
+- [AI 与维护者总览入口（AGENTS.md）](./AGENTS.md)
+- [架构知识库总览](./docs/architecture/README.md)
 - [用户指南](./docs/README.md#档案与搜索)
 - [AI / Knowledge](./docs/README.md#ai-与知识库)
 - [日报与自动化](./docs/README.md#日报与自动化)

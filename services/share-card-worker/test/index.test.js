@@ -135,3 +135,24 @@ test('removes expired cards when they are requested', async () => {
   assert.equal(response.status, 404)
   assert.equal(testEnv.REPORTS.objects.size, 0)
 })
+
+test('renders /v/:id using request origin when PUBLIC_ORIGIN is missing', async () => {
+  const testEnv = env()
+  delete testEnv.PUBLIC_ORIGIN
+  const id = '22222222-2222-4222-8222-222222222222'
+  await testEnv.REPORTS.put(
+    `cards/${id}/card.json`,
+    JSON.stringify({
+      id,
+      title: '测试分享卡',
+      description: '无 PUBLIC_ORIGIN 回退校验',
+      expiresAt: new Date(Date.now() + 60_000).toISOString()
+    })
+  )
+
+  const response = await worker.fetch(new Request(`https://share.example.com/v/${id}`), testEnv)
+  assert.equal(response.status, 200)
+  const html = await response.text()
+  assert.match(html, new RegExp(`<img class="image" src="https://share\\.example\\.com/a/${id}/report"`))
+  assert.doesNotMatch(html, /undefined\/a\//)
+})

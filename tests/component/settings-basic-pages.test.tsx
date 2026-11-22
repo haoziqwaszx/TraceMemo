@@ -9,10 +9,12 @@ const api = {
   checkAppUpdate: vi.fn(),
   downloadAppUpdate: vi.fn(),
   getAppUpdateState: vi.fn(),
+  getIgnoredUpdateVersion: vi.fn(),
   getSettings: vi.fn(),
   installAppUpdate: vi.fn(),
   onAppUpdateState: vi.fn(),
   revealAppLog: vi.fn(),
+  setIgnoredUpdateVersion: vi.fn(),
   setSettings: vi.fn()
 }
 
@@ -25,12 +27,14 @@ describe('basic settings pages', () => {
       currentVersion: '2.2.2',
       delivery: 'automatic'
     })
+    api.getIgnoredUpdateVersion.mockResolvedValue('')
     api.onAppUpdateState.mockReturnValue(vi.fn())
     api.checkAppUpdate.mockResolvedValue({
       success: true,
       state: { status: 'up-to-date', currentVersion: '2.2.2' }
     })
     api.revealAppLog.mockResolvedValue(undefined)
+    api.setIgnoredUpdateVersion.mockResolvedValue(undefined)
     api.getSettings.mockResolvedValue({ settings: { debugEnabled: false } })
     api.setSettings.mockResolvedValue({ settings: { debugEnabled: true } })
   })

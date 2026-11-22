@@ -15,9 +15,9 @@ test(
 )
 
 test('system permission prompts are verified manually on a clean OS account', {
-  skip: 'manual smoke checklist: docs/testing.md'
+  skip: 'manual smoke checklist: docs/architecture/08-testing-and-quality-gates.md'
 })
 
 test('signed installer install, upgrade and uninstall are verified manually', {
-  skip: 'manual smoke checklist: docs/testing.md'
+  skip: 'manual smoke checklist: docs/architecture/08-testing-and-quality-gates.md'
 })

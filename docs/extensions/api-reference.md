@@ -35,6 +35,7 @@
 | `ai.chat` | 中 | `tm.ai.chat` |
 | `storage` | 低 | `tm.storage.*` 与页面存储 |
 | `automation.action` | 中 | `tm.automation.registerAction` |
+| `secrets` | 中 | `tm.secrets.*`（系统安全存储保存扩展私有凭据，不写明文） |
 
 安装时只自动授予**低风险**权限；其余在「启用」确认后授予。停用后回落到低风险集合。
 
@@ -45,6 +46,31 @@
 - `id: string`
 - `dataDir: string`（扩展私有数据目录，媒体文件写这里才能通过发送校验）
 - `permissions: string[]`（当前已授予）
+
+### tm.page
+
+```ts
+tm.page.onRequest(method, (params) => {
+  // 返回纯 JSON 值；单次响应体上限 64KB，超时上限 90s
+  return { ok: true }
+})
+```
+
+- 注册同扩展页面通过页面桥 `extension.request` 发起的请求处理器；
+- 方法名须匹配 `/^[a-z][a-zA-Z0-9]*(?:[._-][a-zA-Z0-9]+){0,3}$/`，同一方法名不可重复注册。
+
+### tm.secrets
+
+```ts
+await tm.secrets.set('cookie', '...')
+await tm.secrets.get('cookie')    // → string | null
+await tm.secrets.has('cookie')    // → boolean
+await tm.secrets.delete('cookie') // → void
+```
+
+- 需声明并授予 `secrets` 权限，底层使用 Electron `safeStorage` 加密保存在 `<userData>/extensions-state/secrets/<id>.bin`（不支持加密时直接报错，不降级明文）；
+- 单个扩展最多保存 `32` 个键，键名匹配 `/^[a-zA-Z][a-zA-Z0-9._-]{0,63}$/`，单值上限 `8KB`；
+- 注：`host-runtime.ts` 中 `tm.secrets.delete` 执行后无返回值，运行期签名固定为 `Promise<void>`。
 
 ### tm.events
 
@@ -62,7 +88,7 @@ await tm.messages.query({ conversationId, startTime?, endTime?, limit? })
 ```
 
 - 时间参数是 **epoch 毫秒**；默认最近 24 小时。
-- 单次窗口最多 7 天，`limit` 上限 200。
+- 单次窗口最多 **35 天**，`limit` 上限 **500**（默认 `50`）。
 - 数据库未连接时抛 `DATABASE_NOT_READY`。
 
 ### tm.wechat.send
@@ -125,13 +151,13 @@ tm.automation.registerAction({ id, title, description?, inputSchema?, handler })
 { success: boolean, output?: object, reply?: { type: 'text', text, at? }, error?: string }
 ```
 
-`inputSchema` 只支持 `object` + `string|number|boolean` 属性的浅校验；必填项缺失会直接拒绝。
+`inputSchema` 支持顶层 `type: 'object'` 与最多 `24` 个 `properties`（整体 JSON ≤ `4KB`），字段类型支持 `string | number | integer | boolean`，支持 `required`、`title`、`description`、`enum`、`default`、`minimum`、`maximum`、`minLength`、`maxLength` 约束；运行期执行 `invokeAction` 时会在子进程按 `inputSchema` 校验输入（注：当前 `src/main/extensions/host-runtime.ts` 发送的 `register-action` IPC 消息仅携带 `hasInputSchema` 布尔标记，未直接携带完整 `inputSchema` 对象）。
 
 执行超时默认 15 秒（宿主可配，最大 60 秒），超时返回 `ACTION_TIMEOUT`。
 
 ### tm.capabilities.get
 
-返回只读快照：`enabled / permissions / platform / databaseReady / send{...} / ai{...}`。
+返回只读快照：`extensionId / enabled / permissions / platform / databaseReady / send{...} / ai{...} / tts?`（含可选的文字转语音 `configured / model / selectedVoiceId / selectedVoice` 状态）。
 
 ### tm.log
 
@@ -152,8 +178,9 @@ tm.automation.registerAction({ id, title, description?, inputSchema?, handler })
 { source: 'tracememo-extension-host', requestId, ok: false, error: { code, message } }
 ```
 
-页面方法白名单：`storage.get|set|remove|list`、`capabilities.get`、`contacts.listGroups`、`extension.info`。
-页面不能发送微信消息、不能查询消息、不能调用 AI。
+页面方法白名单：`storage.get|set|remove|list`、`capabilities.get`、`contacts.listGroups`、`extension.request`、`extension.info`。
+其中 `extension.request` 仅在扩展已启用且后台进程运行时可用，由宿主将其路由到同扩展后台通过 `tm.page.onRequest` 注册的处理器。
+页面不能直接发送微信消息、不能查询消息、不能直接读写 `secrets`、不能调用 AI。
 
 ## 错误码
 
@@ -162,11 +189,13 @@ tm.automation.registerAction({ id, title, description?, inputSchema?, handler })
 | `EXTENSION_NOT_FOUND` | 扩展不存在 / 已卸载 |
 | `EXTENSION_DISABLED` | 扩展未启用 |
 | `EXTENSION_INCOMPATIBLE` | apiVersion 或 minAppVersion 不满足 |
+| `EXTENSION_ALREADY_INSTALLED` | 已安装同名扩展或开发目录已链接 |
+| `EXTENSION_INSTALL_FAILED` | 扩展安装或升级失败 |
 | `EXTENSION_INVALID_MANIFEST` | manifest 不合法 |
-| `EXTENSION_INVALID_PATH` | 入口 / 资源路径越界 |
+| `EXTENSION_INVALID_PATH` | 入口 / 资源 / 开发目录路径越界 |
 | `EXTENSION_HOST_UNAVAILABLE` | 后台进程未运行 |
 | `PERMISSION_DENIED` | 未授予权限，或超出声明范围 |
-| `CAPABILITY_UNAVAILABLE` | 本机能力不具备（未绑定 / 未就绪） |
+| `CAPABILITY_UNAVAILABLE` | 本机能力不具备（未绑定 / 未就绪 / 安全存储不可用） |
 | `LICENSE_REQUIRED` | 无有效授权 |
 | `DATABASE_NOT_READY` | 微信数据库未连接 |
 | `SEND_NOT_SUPPORTED` | 当前平台或内容类型不支持 |
@@ -175,6 +204,11 @@ tm.automation.registerAction({ id, title, description?, inputSchema?, handler })
 | `RATE_LIMITED` | 触发频率限制 |
 | `INVALID_REQUEST` | 参数非法 |
 | `STORAGE_LIMIT_EXCEEDED` | 存储超限 |
+| `EXTENSION_REGISTRY_UNREADABLE` | 扩展状态文件损坏且无法恢复；写入已拒绝并保留现场 |
+| `EXTENSION_STORAGE_CORRUPTED` | 扩展配置或私有凭据损坏且无可用备份；读写暂停 |
+| `EXTENSION_SOURCE_MISSING` | 开发模式源码目录被移动或删除；Registry 与配置保留 |
+| `EXTENSION_PROJECT_EXISTS` | 目标目录非空或不可写；创建/导出项目被拒绝 |
+| `EXTENSION_MODIFIED_LOCALLY` | 检测到模板安装副本已被本地修改，拒绝自动覆盖 |
 
 ## 自动化动作输入
 

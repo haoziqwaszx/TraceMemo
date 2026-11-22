@@ -67,7 +67,9 @@ window.addEventListener('message', (event) => {
 ```
 
 页面可调用的方法只有：`storage.get` / `storage.set` / `storage.remove` / `storage.list` /
-`capabilities.get` / `extension.info`。
+`capabilities.get` / `contacts.listGroups`（需 `contacts.list` 权限）/ `extension.request`（转发至同扩展后台 `tm.page.onRequest`）/ `extension.info`。
+
+若扩展需要保存 Cookie、密钥等敏感凭据，可在 `manifest.json` 申请 `secrets` 权限，在后台使用 `tm.secrets.get/set/delete/has`（通过系统安全存储加密落盘，页面可通过 `extension.request` 委托后台读写，避免明文落盘）。
 
 ## 3. 订阅消息
 
@@ -123,14 +125,14 @@ tm.automation.registerAction({
 })
 ```
 
-扩展中心会展示动作声明与运行时注册状态。当前自动化规则编辑器尚未提供扩展动作选择入口，因此暂时不能从界面配置该动作。宿主侧执行契约与输入结构见[扩展 API 参考](./api-reference.md#自动化动作输入)。
+扩展中心会展示动作声明与运行时注册状态。自动化规则编辑器（`src/renderer/src/features/automation/RuleEditorPanel.tsx`）已集成扩展动作选择器（`ExtensionActionList`），可在「触发后执行 → 执行扩展动作」中直接勾选并配置已注册的扩展动作。宿主侧执行契约与输入结构见[扩展 API 参考](./api-reference.md#自动化动作输入)。
 
 扩展动作返回的 `reply` 由宿主经 Gateway 发送；扩展本身不调用发送接口也能完成回复。
 
 ## 5. 开发与调试
 
-- TraceMemo 会把扩展复制到用户数据目录；改完源码后先在扩展中心重新安装同一目录，更新已安装的文件。需要时再「停用 → 启用」重启后台进程。
-- 页面资源更新后重新打开或刷新扩展页面。
+- **开发模式（推荐）**：在扩展中心「二次开发」引导中可「从模板创建项目」或「链接本地项目」。链接后宿主直接从外部源码目录运行（不复制代码，配置/日志/凭据仍写入 TraceMemo 用户数据目录）；修改后台源码后点击「重新加载」即可生效，修改页面资源刷新 iframe 即可。调试完成后可通过「移除链接」断开引用（不删除源码目录）或「转为正式安装」。
+- **目录安装模式**：若直接「安装目录」或「安装 ZIP」，TraceMemo 会把扩展复制到用户数据目录；改完源码后需重新安装同一目录，必要时「停用 → 启用」重启后台进程。
 - 日志在扩展详情页底部，`宿主` 表示生命周期与错误，`扩展` 表示 `tm.log.*` 写入的内容。
 - 想看完整后台输出，可以在终端启动 `pnpm dev`，子进程 stderr 会进主进程日志。
 

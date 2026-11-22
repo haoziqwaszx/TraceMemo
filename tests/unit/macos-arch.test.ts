@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { KeyServiceMac } from '../../src/main/key-service-mac'
 import {
   ARCH_MISMATCH_X64_ON_ARM_ERROR,
@@ -148,10 +148,17 @@ vi.mock('../../src/main/macos-arch', () => ({
 }))
 
 describe('KeyServiceMac arch guard', () => {
+  const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform')!
+
   beforeEach(() => {
+    Object.defineProperty(process, 'platform', { configurable: true, value: 'darwin' })
     spawnMock.mockReset()
     execFileMock.mockReset()
     flowState.flow = 'arch-mismatch'
+  })
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', originalPlatform)
   })
 
   /** 列出所有被 spawn/execFile 触达的可执行文件，用于断言「什么也没启动」。 */

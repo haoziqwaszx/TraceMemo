@@ -15,7 +15,7 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm dev` 启动的是 TraceMemo 开发版。扩展安装后会复制到应用的用户数据目录；修改源码目录里的文件不会自动同步到已安装副本，每次改完都要重新安装同一扩展目录。
+`pnpm dev` 启动的是 TraceMemo 开发版。通过「安装目录」安装的扩展会复制到应用的用户数据目录；若希望直接基于本地目录迭代开发，可在扩展中心使用「二次开发 → 链接本地项目」（开发模式直接运行你选定的源码目录，改完代码点击「重新加载」即可生效，无需反复重装）。
 
 ## 2. 从示例创建扩展
 
@@ -103,21 +103,21 @@ module.exports = function activate(tm) {
 
 按需申请权限，不要为了省事把所有权限都加上。高、中风险权限会在启用时要求用户确认；没有获得相应授权的 API 会返回权限错误。微信发送仍经过 TraceMemo 的权限、范围、频率、发送能力和授权校验。
 
-可用 API 包括 `tm.events`、有界的 `tm.messages.query`、`tm.wechat.send`、`tm.ai.chat`、`tm.storage`、`tm.automation.registerAction`、`tm.capabilities.get` 和 `tm.log`。字段、限制与错误码见[扩展 API 参考](./api-reference.md)。仓库的 `packages/extension-sdk/index.d.ts` 只提供类型定义，不是运行时依赖；运行时的 `tm` 由 TraceMemo 注入。
+可用 API 包括 `tm.events`、有界的 `tm.messages.query`（单次最多 35 天 / 500 条）、`tm.wechat.send`、`tm.ai.chat`、`tm.storage`、`tm.secrets`（需 `secrets` 权限）、`tm.page.onRequest`、`tm.automation.registerAction`、`tm.capabilities.get` 和 `tm.log`。字段、限制与错误码见[扩展 API 参考](./api-reference.md)。仓库的 `packages/extension-sdk/index.d.ts` 只提供类型定义，不是运行时依赖；运行时的 `tm` 由 TraceMemo 注入。
 
 ## 4. 编写扩展页面
 
-页面在 sandbox iframe 中运行，不能访问 `window.api`、Node 或 Electron。需要调用宿主白名单功能时，通过 `postMessage` 页面桥通信。可参考 `examples/extensions/keyword-bot/ui/app.js` 里的 `callHost()` 与消息处理，并更新其中的扩展 id。页面桥目前允许存储读写、能力查询、群列表查询（需 `contacts.list`）和扩展信息查询；页面不能直接读取聊天消息、调用 AI 或发送微信。
+页面在 sandbox iframe 中运行，不能访问 `window.api`、Node 或 Electron。需要调用宿主白名单功能时，通过 `postMessage` 页面桥通信。可参考 `examples/extensions/keyword-bot/ui/app.js` 里的 `callHost()` 与消息处理，并更新其中的扩展 id。页面桥目前允许存储读写（`storage.*`）、能力查询（`capabilities.get`）、群列表查询（`contacts.listGroups`，需 `contacts.list`）、扩展信息查询（`extension.info`）以及同扩展后台请求转发（`extension.request`，对应后台 `tm.page.onRequest`，要求扩展已启用且后台正在运行）；页面不能直接读取聊天消息、直接操作 `tm.secrets`、调用 AI 或发送微信。
 
 后台逻辑使用 `tm.storage`；页面则通过页面桥的 `storage.get` / `storage.set` 等方法访问同一扩展的私有存储。
 
 ## 5. 在 TraceMemo 中安装和调试
 
 1. 在开发版或已支持扩展的 TraceMemo 中打开左侧「扩展」。
-2. 选择「安装目录」，指向 `my-tracememo-extension`。也可以将扩展文件打成 ZIP；`manifest.json` 必须位于 ZIP 根目录，然后选择「安装 ZIP」。
-3. 安装完成后，选中扩展并点「启用」。检查权限清单，只确认扩展功能确实需要的权限。
-4. 有页面入口时点「打开页面」；检查配置是否读写正常。后台运行日志可在扩展详情页查看。
-5. 修改源码后重新安装同一个目录，以更新已安装副本；如后台进程仍未刷新，再停用后重新启用。页面资源更新后重新打开或刷新扩展页面。
+2. **开发期推荐用开发模式**：进入「二次开发」可直接「从模板创建项目」（自动生成独立扩展并改写源码中的扩展 id）或「链接本地项目」指向 `my-tracememo-extension`；修改后台代码后点击「重新加载」即可重启后台进程，修改页面文件刷新 iframe 即可。也可以将已安装副本「导出为开发项目」，或将开发项目「转为正式安装」。
+3. **正式分发可用目录/包安装**：选择「安装目录」指向 `my-tracememo-extension`，或将扩展文件打成 ZIP（`manifest.json` 必须位于 ZIP 根目录）后选择「安装 ZIP」。
+4. 安装或链接完成后，选中扩展并点「启用」。检查权限清单，只确认扩展功能确实需要的权限。
+5. 有页面入口时点「打开页面」；检查配置是否读写正常。后台运行日志可在扩展详情页查看。
 
 同一 `id` 重新安装会更新扩展代码并保留已授予权限、启用状态和扩展存储。卸载默认保留数据；需要清理时再明确选择删除数据。
 
@@ -147,7 +147,7 @@ pnpm typecheck
 
 扩展可以在 manifest 中用 `contributions.automationActions` 声明动作，并申请 `automation.action`；后台通过 `tm.automation.registerAction()` 注册实现。动作返回的 `reply` 由 TraceMemo 宿主经统一 Gateway 发送，扩展不应自行绕过 Gateway。
 
-当前版本可以在扩展详情页查看动作是否已注册；自动化规则编辑器尚未提供选择扩展动作的入口，因此目前不能通过界面把这些扩展动作配置到规则中。相关执行接口已在宿主侧实现，界面入口开放后再按产品文档配置。
+在扩展详情页可查看动作声明与运行时注册状态；自动化规则编辑器（`src/renderer/src/features/automation/RuleEditorPanel.tsx`）已在「触发后执行 → 执行扩展动作」中提供扩展动作选择器，可以直接在规则中勾选并配置已注册的扩展动作。
 
 ## 8. 安全与发布前检查
 

@@ -1,6 +1,8 @@
 # TraceMemo 文档
 
-文档按产品任务和使用场景组织。需要集成或开发时，再看 Agent、概念和开发文档。
+> **架构知识库与开发者总览**：如需了解全仓源码架构、进程拓扑、模块边界、IPC 通道与打包测试体系，请优先阅读 **[架构知识库总览](./architecture/README.md)** 与项目根目录 **[AGENTS.md](../AGENTS.md)**。
+
+文档按产品任务和使用场景组织。需要集成或开发时，再看架构知识库、Agent、概念和开发文档。
 
 ## 档案与搜索
 
@@ -49,13 +51,19 @@ Agent Hub 让微信机器人调用本机 TraceMemo；Reader Skill / Local HTTP A
 
 ## 开发文档
 
+- [架构知识库总览（源码基线 8f47dca）](./architecture/README.md)
 - [开发、测试与构建](./development/overview.md)
+- [Local HTTP API / Agent API 能力审计](./development/agent-api-capability-audit.md)
+- [扩展中心架构（v1）](./extensions/architecture.md)
+- [扩展开发入门](./extensions/getting-started.md)
+- [扩展安全模型（v1）](./extensions/security.md)
 - [克隆 TraceMemo 后开发自己的扩展](./extensions/clone-and-customize.md)
 - [扩展 API 参考](./extensions/api-reference.md)
 - [界面开发规范：按钮与主题色](./development/ui-guidelines.md)
 - [微信系统消息解析与格式兼容](./development/wechat-system-message-parsing.md)
 - [Query Agent POC（开发测试入口）](./development/query-agent-poc.md)
 - [本地启动排障](./development/local-startup-troubleshooting.md)
+- [macOS 版本发送能力二次开发](./development/mac-wechat-send-capability-integration.md)
 - [macOS 数据访问说明](./platform/macos.md)
 - [关闭 SIP 教程](./mac-disable-sip.md)
 

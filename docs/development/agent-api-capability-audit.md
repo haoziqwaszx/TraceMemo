@@ -1,6 +1,11 @@
 # TraceMemo Local HTTP API / Agent API 能力审计
 
-本报告基于当前代码、文档、IPC、Renderer 调用和相关测试做静态审计，对应当前发布应用版本 `2.5.0`；不连接真实微信数据库，也不修改生产代码、API Center 或测试。
+> **2.5.0 历史基线审计快照说明**：本文档记录的是 TraceMemo `2.5.0` 发布基线时的静态能力审计与演进规划快照（历史数据保留以供对照）。截至 `2.7.0`（源码基线 `8f47dca`），原审计中多项核心待办已在 `src/main/http-server.ts` 及对应服务落地实现，最新权威契约请直接查阅 [Local HTTP API 文档](../agent/api.md) 与 [HTTP API 与扩展系统架构](../architecture/05-http-api-and-extensions.md)：
+> - **已落地的路由与服务**：`GET /api/v1/capabilities`、`GET/PATCH /api/v1/monitors/group-exits`、`GET /api/v1/monitors/group-exits/events`、`GET /api/v1/groups/{conversationId}/member-stats`、`GET/POST /api/v1/automations`、`POST /api/v1/automations/validate`、`GET /api/v1/automations/executions`、`GET/PATCH/DELETE /api/v1/automations/{id}`、`POST /api/v1/automations/{id}/enable|disable`（`src/main/services/local-agent-api-service.ts`）、`POST /api/v1/wechat/send`（经 `WechatActionGateway` 审计与策略执行）、以及 `POST /api/v1/query/voice-transcribe`。
+> - **已落地的 HTTP 基础契约**：全部静态与动态路由均通过 `withMethods` 统一拦截不支持动词并返回 `405` + `Allow` 响应头；`readBody` 已强制 `MAX_JSON_BODY_BYTES = 1 MiB` 并在超限时排空请求体后返回 `413`；全请求生成/透传 `X-Request-Id` 并在错误体中携带 `requestId`；`/api/v1/health` 通过 `app.getVersion()` 返回真实应用版本（当前 `2.7.0`）；`src/shared/local-api-test.ts` 的 `LOCAL_API_ENDPOINTS` 已从 14 项扩充为 24 项。
+> - **仍属历史事实保留的项**：`POST /api/v1/scheduled-reports/executions/{executionId}/retry-send` 仍固定返回 `501 not_supported`；本地 API 仍采用单一全权限 Bearer Token（未做细粒度 Scope 拆分）；`POST /api/v1/monitors/group-exits/check`、`GET /api/v1/wechat/send-logs`、`GET /api/v1/wechat/action-logs`、`GET /api/v1/executions`、`GET /api/v1/reports/history*` 等仍未对外暴露。
+
+本报告基于当时代码、文档、IPC、Renderer 调用和相关测试做静态审计，对应当时发布应用版本 `2.5.0`；不连接真实微信数据库，也不修改生产代码、API Center 或测试。
 
 主要代码入口：[http-server.ts](../../src/main/http-server.ts)、[automation-rule-store.ts](../../src/main/services/automation-rule-store.ts)、[group-exit-monitor-service.ts](../../src/main/services/group-exit-monitor-service.ts)、[group-stats-service.ts](../../src/main/services/group-stats-service.ts)、[api.md](../agent/api.md)。
 

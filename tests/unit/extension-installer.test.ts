@@ -156,7 +156,11 @@ describe('extension installer', () => {
   it('拒绝符号链接，且不留下半装目录', async () => {
     const { paths, installer } = setup()
     const source = createExtensionSource(path.dirname(paths.userData))
-    fs.symlinkSync('/etc/hosts', path.join(source, 'ui', 'link.html'))
+    if (process.platform === 'win32') {
+      fs.symlinkSync(path.dirname(paths.userData), path.join(source, 'ui', 'link-dir'), 'junction')
+    } else {
+      fs.symlinkSync('/etc/hosts', path.join(source, 'ui', 'link.html'))
+    }
     await expect(
       installer.installFromDirectory(source, { appVersion: '2.6.0' })
     ).rejects.toMatchObject({

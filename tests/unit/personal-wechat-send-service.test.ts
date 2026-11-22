@@ -86,6 +86,16 @@ beforeEach(() => {
 })
 
 describe('macOS message-source send routing', () => {
+  const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform')!
+
+  beforeEach(() => {
+    Object.defineProperty(process, 'platform', { configurable: true, value: 'darwin' })
+  })
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', originalPlatform)
+  })
+
   it('sends a message-source image through one local-path request without CDN upload', async () => {
     const root = temporaryDirectory()
     const filePath = join(root, 'fixture-image.png')

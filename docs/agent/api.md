@@ -41,14 +41,14 @@ Token 由应用生成并保存在本机，**不接受用环境变量覆盖**：A
 | GET    | `/api/v1/chatroom`                                              | 群聊列表                               | `keyword`                                                       |
 | GET    | `/api/v1/recent_chat`                                           | 最近会话                               | `limit`，默认 50                                                |
 | GET    | `/api/v1/chatlog`                                               | 指定会话的聊天记录                     | 必填 `talker`；可选 `time` 或 `startTime`/`endTime`             |
-| GET    | `/api/v1/media/{mediaId}`                                       | 获取图片消息的二进制资源               | 原样使用 `/chatlog` 返回的 `media.url`，不要用消息 `id` 拼接    |
+| GET, HEAD | `/api/v1/media/{mediaId}`                                    | 获取图片消息的二进制资源（`HEAD` 仅返回头信息）| 原样使用 `/chatlog` 返回的 `media.url`，不要用消息 `id` 拼接    |
 | GET    | `/api/v1/group_snapshot`                                        | 群成员快照                             | 必填 `md5`                                                      |
 | GET    | `/api/v1/resolve`                                               | 将昵称、wxid 或 md5 解析为会话         | 必填 `q`                                                        |
 | POST   | `/api/v1/report`                                                | 将结构化日报渲染为 HTML 与 PNG         | `GroupReportExportRequest` JSON                                 |
 | GET    | `/api/v1/agent/status`                                          | Agent Hub、连接器和数据库状态          | 无                                                              |
 | POST   | `/api/v1/agent/group-report`                                    | 读取群聊并生成总结图片                 | `{ "group": "群名或标识", "range": "today\|yesterday\|7days" }` |
 | POST   | `/api/v1/agent/send`                                            | 通过已连接机器人测试发送文字或本地图片 | `{ "to": "接收者", "text": "...", "media_url": "..." }`         |
-| POST   | `/api/v1/wechat/send`                                           | 用本机微信账号把消息发给别人           | `{ "to": "wxid 或 filehelper", "type": "text\|image\|voice", "text": "..." }` |
+| POST   | `/api/v1/wechat/send`                                           | 用本机微信账号把消息发给别人           | `{ "to": "wxid 或 filehelper", "type": "text\|image\|voice\|file", ... }`（支持 `fileName`、群聊 `at`） |
 | GET    | `/api/v1/wechat-personal/send-capability`                       | 个人微信发送能力状态                   | 无                                                              |
 | GET    | `/api/v1/scheduled-reports`                                     | 定时日报任务列表                       | 无                                                              |
 | POST   | `/api/v1/scheduled-reports`                                     | 创建定时日报任务                       | `ScheduledReportApiCreateRequest` JSON                          |
@@ -87,7 +87,7 @@ Token 由应用生成并保存在本机，**不接受用环境变量覆盖**：A
 | 身份 | 你本人当前登录的微信账号 | 已扫码接入的机器人 |
 | 用途 | **以你的身份把消息发给别人**（好友 / 群 / 文件传输助手） | **机器人给自己发通知**（测试连通性） |
 | 前置条件 | 本机微信已启动，发送能力为 `ready` | 连接器为 `online` |
-| 内容类型 | `text` / `image` / `voice`，媒体只接受本地文件 | `text` / `image`（URL 或本地路径） |
+| 内容类型 | `text` / `image` / `voice` / `file`，媒体与文件只接受本机绝对路径 | `text` / `image`（URL 或本地路径） |
 | 典型失败 | 能力未就绪 `503`、发送失败 `502` | 连接器离线 `503`、凭证过期 `401` |
 
 ### 本地发送：`POST /api/v1/wechat/send`
@@ -107,9 +107,11 @@ curl -X POST http://127.0.0.1:6131/api/v1/wechat/send \
 | 字段 | 必填 | 说明 |
 | --- | --- | --- |
 | `to` | 是 | 接收者：好友 wxid、群 id（以 `@chatroom` 结尾），或 `filehelper`（文件传输助手）。**不做昵称解析**，先调 `/api/v1/resolve?q=张三` 换 wxid |
-| `type` | 否 | `text`（默认）/ `image` / `voice` |
+| `type` | 否 | `text`（默认）/ `image` / `voice` / `file` |
 | `text` | `type=text` 时必填 | **最长 2000 字符**，超限返回 `400`，不会截断 |
-| `filePath` | `type=image\|voice` 时必填 | 本机**绝对路径**，必须已存在。不接受 URL —— 需要发网络图片时先落盘 |
+| `at` | 否 | 仅 `type=text` 且为群聊时有效：`Record<string, string>`（`wxid -> 显示名`，最多 50 人）；单聊传入返回 `400` |
+| `filePath` | `type=image\|voice\|file` 时必填 | 本机**绝对路径**，必须已存在。不接受 URL —— 需要发网络图片或文件时先落盘 |
+| `fileName` | 否 | 仅 `type=file` 时有效，自定义发送时的文件显示名 |
 | `isGroup` | 否 | 通常可省略；`to` 以 `@chatroom` 结尾时自动判为群 |
 | `idempotencyKey` | 否 | 幂等键。**重试时请原样带上**，避免 Agent 超时重发导致重复消息 |
 
@@ -304,15 +306,21 @@ curl -H "$AUTH" "$BASE/chatlog?talker=技术交流群&time=2026-08-07"
 ## 响应与错误
 
 - `200`：请求成功；
-- `201`：定时日报任务创建成功；
-- `401`：缺少、错误或已失效的 Bearer Token；
+- `201`：定时日报任务或自动化规则创建成功；
+- `206`：部分 Query 检索未覆盖完整范围（`retrieval_incomplete`）；
 - `400`：参数或 JSON 请求体无效；
-- `422`：媒体标识格式错误，或目标消息不是可读取的图片（`NOT_IMAGE`）；
-- `403`：浏览器 Origin 不在允许的 loopback 列表；
-- `409`：定时日报任务重复（`error === "duplicate"`，响应里会带回已存在的任务），或群聊名称匹配到多个目标（`ambiguous_contact`）；
+- `401`：缺少、错误或已失效的 Bearer Token；
+- `403`：浏览器 Origin 不在允许的 loopback 列表，或发送策略拒绝；
 - `404`：端点、会话或群聊不存在；媒体标识未登记、已过期、有歧义，或图片文件不存在（`NOT_FOUND`）。媒体请求遇到此状态时，先重新读取 `/chatlog` 并使用新的 `media.url`；若仍失败，再检查本地图片文件是否存在；
-- `503`：数据库或 Agent Hub 尚未就绪；
-- `500`：服务端处理或报告渲染失败。
+- `405`：HTTP 方法不受支持（附带 `Allow` 响应头，Agent API 返回 `METHOD_NOT_ALLOWED`）；
+- `409`：定时日报任务重复（`error === "duplicate"`，响应里会带回已存在的任务）、群聊名称匹配到多个目标（`ambiguous_contact`），或规则校验/单例/内置规则保护冲突（`VALIDATION_FAILED` / `SINGLETON_RULE` / `PROTECTED_RULE`）；
+- `413`：请求体超过 `1 MiB` 上限（`PAYLOAD_TOO_LARGE`）；
+- `422`：媒体标识格式错误、目标消息不是可读取的图片（`NOT_IMAGE`），或自动化草稿/监控群校验失败（`VALIDATION_FAILED`；注：启用自动化规则时校验失败返回 `409 VALIDATION_FAILED`）；
+- `429`：语音转写队列繁忙（`busy`，附带 `Retry-After` 响应头与 `retryAfterSeconds`）；
+- `500`：服务端处理、持久化或报告渲染失败；
+- `501`：兼容占位接口不支持（如 `POST /api/v1/scheduled-reports/executions/{executionId}/retry-send` 返回 `not_supported`）；
+- `502`：本地微信发送已进入投递但底层发送失败（`SEND_FAILED`）；
+- `503`：数据库、发送能力、Skill 资源或 Agent Hub 尚未就绪。
 
 成功响应会返回端点对应的 JSON 对象，例如 `chatlog` 包含 `contact`、`query`、`count` 和 `messages`，`contact` 返回 `count` 与 `contacts`。
 
@@ -486,7 +494,7 @@ curl http://127.0.0.1:6131/api/v1/health
   "ok": true,
   "ready": true,
   "service": "TraceMemo Reader",
-  "version": "2.5.1",
+  "version": "2.7.0",
   "skill": { "name": "tracememo-reader", "version": "1.4.0", "available": true },
   "timestamp": "2026-10-13T08:43:52.863Z"
 }

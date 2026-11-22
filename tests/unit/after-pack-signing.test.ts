@@ -65,8 +65,12 @@ function fixtureApp(): string {
   )
   file('TraceMemo.app', 'Contents', 'Frameworks', 'Helper.app', 'Contents', 'MacOS', 'Helper')
   // framework 内指向 Versions/A 的符号链接：真实文件在更深层级被走到，这里要跳过。
+  const currentLinkTarget =
+    process.platform === 'win32'
+      ? join(root, 'TraceMemo.app', 'Contents', 'Frameworks', 'Mantle.framework', 'Versions', 'A')
+      : 'A'
   symlinkSync(
-    'A',
+    currentLinkTarget,
     join(
       root,
       'TraceMemo.app',
@@ -76,7 +80,7 @@ function fixtureApp(): string {
       'Versions',
       'Current'
     ),
-    'dir'
+    process.platform === 'win32' ? 'junction' : 'dir'
   )
   // Contents/Resources 下的原生文件不是「嵌套代码」，不参与签名。
   file(

@@ -1,5 +1,18 @@
 /** TraceMemo 扩展 SDK v1：仅类型定义，运行期由宿主注入全局 tm。 */
 
+export type ExtensionPermission =
+  | 'messages.subscribe'
+  | 'messages.query'
+  | 'contacts.list'
+  | 'wechat.send.text'
+  | 'wechat.send.image'
+  | 'wechat.send.video'
+  | 'wechat.send.voice'
+  | 'ai.chat'
+  | 'storage'
+  | 'automation.action'
+  | 'secrets'
+
 export type ExtensionMessageType =
   | 'text'
   | 'image'
@@ -86,13 +99,27 @@ export type TraceMemoSendRequest =
   | TraceMemoSendVideoRequest
   | TraceMemoSendVoiceRequest
 
+export type TraceMemoActionFieldType = 'string' | 'number' | 'integer' | 'boolean'
+
+export interface TraceMemoActionFieldSchema {
+  type: TraceMemoActionFieldType
+  title?: string
+  description?: string
+  enum?: Array<string | number>
+  default?: string | number | boolean
+  minimum?: number
+  maximum?: number
+  minLength?: number
+  maxLength?: number
+}
+
 export interface TraceMemoAutomationActionDefinition {
   id: string
   title: string
   description?: string
   inputSchema?: {
     type: 'object'
-    properties?: Record<string, { type?: 'string' | 'number' | 'boolean'; description?: string }>
+    properties: Record<string, TraceMemoActionFieldSchema>
     required?: string[]
   }
   handler: (input: Record<string, unknown>) => unknown | Promise<unknown>
@@ -146,6 +173,18 @@ export interface TraceMemoApi {
     /** 扩展私有数据目录；下载与生成的文件应放在这里。 */
     readonly dataDir: string
     readonly permissions: string[]
+  }
+  page: {
+    onRequest(
+      method: string,
+      handler: (params: Record<string, unknown>) => unknown | Promise<unknown>
+    ): void
+  }
+  secrets: {
+    get(key: string): Promise<string | null>
+    set(key: string, value: string): Promise<void>
+    delete(key: string): Promise<void>
+    has(key: string): Promise<boolean>
   }
   events: {
     on(

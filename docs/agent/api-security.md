@@ -4,7 +4,7 @@
 
 TraceMemo 的本地 API 默认监听 `127.0.0.1:6131`。它面向同一台电脑上的 API Center、Reader Skill、CLI 和 Agent，不是公网网关，也不是带用户账户和细粒度权限 Scope 的服务。
 
-它同时包含**写入型**端点：生成报告并渲染 PNG（`/report`）、通过已连接机器人发送微信消息（`/agent/send`）、创建/修改/删除/启停定时日报任务并触发立即执行（`/scheduled-reports*`）。因此这个 Token 相当于本机敏感凭据，而不是一个只读查询键。
+它同时包含**写入型与外部执行型**端点：生成报告并渲染 PNG（`POST /api/v1/report`）、AI 生成群日报图片（`POST /api/v1/agent/group-report`）、通过本机个人微信向他人发送文本/图片/语音/文件（`POST /api/v1/wechat/send`）、通过已连接机器人测试发送（`POST /api/v1/agent/send`）、创建/修改/删除/启停自动化规则（`POST /api/v1/automations`、`PATCH/DELETE /api/v1/automations/{id}`、`POST /api/v1/automations/{id}/enable|disable`）、修改退群监控范围与开关（`PATCH /api/v1/monitors/group-exits`）、兼容定时日报管理与立即执行（`/api/v1/scheduled-reports*`），以及触发本机离线语音转写（`POST /api/v1/query/voice-transcribe`）。因此这个 Token 相当于本机敏感凭据，而不是一个只读查询键。
 
 ## Bearer Token
 
@@ -27,13 +27,13 @@ export TRACEMEMO_API_TOKEN="<TOKEN>"
 
 ## CORS 与 Origin
 
-带浏览器 `Origin` 的请求只允许精确的 HTTP loopback Origin：
+带浏览器 `Origin` 的请求只允许精确的 HTTP loopback Origin（非法 `Origin` 返回 `403`）：
 
 - `http://localhost` 及其端口；
 - `http://127.0.0.1` 及其端口；
 - `http://[::1]` 及其端口。
 
-不带 `Origin` 的 curl、Node、本地脚本和 Agent 请求不受浏览器 CORS 规则限制，但仍必须携带 Token（health 除外）。
+允许的 CORS 方法为 `GET, HEAD, POST, PATCH, DELETE, OPTIONS`，允许的请求头为 `Content-Type, Authorization, X-Request-Id`；`OPTIONS` 预检请求在鉴权前直接返回 `204`。不带 `Origin` 的 curl、Node、本地脚本和 Agent 请求不受浏览器 CORS 规则限制，但仍必须携带 Token（`/api/v1/health` 除外）。
 
 ## 不要做的事
 
