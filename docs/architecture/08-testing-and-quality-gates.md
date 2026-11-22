@@ -1,6 +1,6 @@
 # 08 · 六层测试体系与质量门禁架构
 
-> **源码基线**：Git commit `8f47dca`（`package.json` `v2.7.0`）  
+> **源码基线**：Git commit `9efb8ac`（`package.json` `v2.7.0`）<br>
 > **相关文档**：[知识库总览](./README.md) · [系统整体架构](./01-system-overview.md) · [主进程与数据存储](./02-main-process-and-data.md) · [渲染层与 IPC 契约](./06-renderer-and-ipc.md) · [构建脚本与打包体系](./07-build-scripts-and-packaging.md)
 
 ---

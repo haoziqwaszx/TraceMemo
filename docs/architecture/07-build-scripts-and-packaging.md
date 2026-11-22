@@ -1,6 +1,6 @@
 # 07 · 构建脚本、资源分发与双端打包签名体系
 
-> **源码基线**：Git commit `8f47dca`（`package.json` `v2.7.0`，`pnpm@7.33.7`）  
+> **源码基线**：Git commit `9efb8ac`（`package.json` `v2.7.0`，`pnpm@7.33.7`）<br>
 > **相关文档**：[知识库总览](./README.md) · [系统整体架构](./01-system-overview.md) · [主进程与数据存储](./02-main-process-and-data.md) · [渲染层与 IPC 契约](./06-renderer-and-ipc.md) · [测试与质量门禁](./08-testing-and-quality-gates.md)
 
 ---

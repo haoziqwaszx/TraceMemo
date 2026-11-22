@@ -1,6 +1,6 @@
 # 04. 聊天导出、群日报沙箱、自动化防回环与双通道微信网关
 
-> **源码基线**：`8f47dca`｜**适用范围**：聊天多格式导出与增量 HTML 归档、群日报与模板安全沙箱、退群监控与进程外写入隔离、四道防回环自动化引擎、双通道微信网关（iLink + 个人微信）与 `AgentHubService`
+> **源码基线**：`9efb8ac`｜**适用范围**：聊天多格式导出与增量 HTML 归档、群日报与模板安全沙箱、退群监控与进程外写入隔离、四道防回环自动化引擎、双通道微信网关（iLink + 个人微信）与 `AgentHubService`
 
 本专题覆盖 TraceMemo 在核心数据底座之上的业务出口与主动触达闭环，上承 [02. 主进程生命周期与核心数据访问](./02-main-process-and-data.md) 的只读 WCDB4 数据与解密能力，并与 [03. 本地知识库与 AI 检索流水线](./03-knowledge-and-ai-pipeline.md)（共享 `AskWechatService` / `QueryAgentService`）以及 [05. 本地 HTTP API 与扩展中心](./05-http-api-and-extensions.md)（共享扩展桥接与 HTTP 投影契约）协同工作。
 

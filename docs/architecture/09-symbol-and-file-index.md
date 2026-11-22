@@ -1,6 +1,6 @@
 # 09 · 全仓文件、符号、通道与配置总索引
 
-> **源码基线**：Git commit `8f47dca`（`package.json` `v2.7.0`，`pnpm@7.33.7`，Node `22`）  
+> **源码基线**：Git commit `9efb8ac`（`package.json` `v2.7.0`，`pnpm@7.33.7`，Node `22`）<br>
 > **相关文档**：[知识库总览](./README.md) · [系统架构总览](./01-system-overview.md) · [主进程与数据访问](./02-main-process-and-data.md) · [知识库与 AI 检索](./03-knowledge-and-ai-pipeline.md) · [报告、自动化与 Hub](./04-reports-automation-hub.md) · [Local HTTP 与扩展](./05-http-api-and-extensions.md) · [渲染层与 IPC 契约](./06-renderer-and-ipc.md) · [构建脚本与打包](./07-build-scripts-and-packaging.md) · [测试体系与门禁](./08-testing-and-quality-gates.md)
 
 本索引汇总 TraceMemo 全仓一级/二级目录文件分布、核心导出符号定义位置、主进程 `ipcMain` 与推送通道、Local HTTP API / Share Card Worker / `tm-wechat-host` 端点、55+ 个关键环境变量，以及本次源码梳理实证的细节偏差与基线同步/修复状态，供维护者与外部 AI 按图索骥直达源码。
@@ -151,7 +151,7 @@
 
 ## 三、核心数据流与设计思路：已核实源码细节偏差、遗留点与基线修复状态
 
-以下 8 项均在基线 `8f47dca` 源码中逐行核实，明确区分**现状遗留**与**已同步/修复项**：
+以下 8 项均在基线 `9efb8ac` 源码中逐行核实，明确区分**现状遗留**与**已同步/修复项**：
 
 1. **主进程服务反向引用渲染层（架构分层违例）**
    - **位置**：`src/main/services/agent-group-report-service.ts:14-22`

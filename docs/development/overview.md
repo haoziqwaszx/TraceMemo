@@ -49,7 +49,9 @@ pnpm test:e2e:build
 
 两条容易被写错的边界：
 
-- **防撤回已下线**（`src/main/services/recall-archive-service.ts` 保留但不再启动）：设置入口隐藏，`recallProtectionEnabled` 在所有读写路径上被强制收敛为 `false`。不要把它写回用户指南。
+- **区分旧版「内置防撤回归档」与活跃的「微信内防撤回提示」**：
+  - **已下线（不要写回用户指南）**：旧版 TraceMemo 内置防撤回归档服务（`src/main/services/recall-archive-service.ts` 保留但不再启动，设置入口隐藏，`recallProtectionEnabled` 在所有读写路径上被强制收敛为 `false`）。
+  - **仍活跃（位于「自动化」工作区）**：`MessageInsertSwitches` 提供的 **微信内防撤回提示**（`recall_notice`）与 **微信内退群监控消息**（`group_exit_notice`），定义见 `src/shared/msg-insert-switch.ts`，由主进程派生短命 `tm-wcdb-config-helper` 写入微信分片规则生效。编写文档时切勿把两者混为一谈。
 - **图片文字索引（本机 OCR）与图片理解（需要 Provider）是两条不同的路径**：前者写入本地索引、能被搜索，且不联网；后者只在日报和设置里的模型检测中使用。改其中一条时不要把另一条的隐私口径带过去。
 
 ## 文档检查
@@ -58,10 +60,12 @@ pnpm test:e2e:build
 
 ```bash
 git diff --check
-# 过时版本号、旧品牌名、旧结构叙述、MCP 误解
-rg -n "v2\.1\.7|2\.4\.0|v2\.2\.0 兼容期|无鉴权|mcpServers" README.md docs --glob '*.md' --glob '!development/overview.md'
+# 校验知识库与文档内全部相对链接、锚点与仓库源码路径（0 错误）
+node scripts/check-knowledge-base.mjs
+# 过时版本号、旧品牌名、旧结构叙述、MCP 误解（排除本检查说明及刻意保留负向澄清的架构文档与冻结 Skill）
+rg -n "v2\.1\.7|2\.4\.0|v2\.2\.0 兼容期|无鉴权|mcpServers" README.md docs --glob '*.md' --glob '!docs/development/overview.md' --glob '!docs/architecture/**' --glob '!docs/skill/**'
 # 不存在的产品结构（定时日报已并入自动化）
-rg -n "日报 → 定时日报|Monitor / Automation" README.md docs --glob '*.md'
+rg -n "日报 → 定时日报|Monitor / Automation" README.md docs --glob '*.md' --glob '!docs/development/overview.md'
 ```
 
-历史迁移说明可以出现旧版本号；正式使用指南不要把过时版本写成当前版本。负向澄清“6131 不是 MCP Server”可以保留，以防用户照抄错误配置。发版前额外确认 `README.md` 里的版本号与 `package.json` 的 `version` 一致。
+历史迁移说明可以出现旧版本号；正式使用指南不要把过时版本写成当前版本。负向澄清“6131 不是 MCP Server”可以保留在 Skill 与架构文档中，以防用户照抄错误配置。发版前额外确认 `package.json` 的 `version` 与打包 Skill 版本及架构知识库基线保持同步（`pnpm check:skill-version`）。

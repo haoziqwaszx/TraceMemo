@@ -1,6 +1,6 @@
 # AGENTS.md — TraceMemo 开发者与 AI 总览入口
 
-> **源码基线**：Git commit `8f47dca`（`package.json` 版本 `2.7.0`，包管理器 `pnpm@7.33.7`，Node `22`）
+> **源码基线**：Git commit `9efb8ac`（`package.json` 版本 `2.7.0`，包管理器 `pnpm@7.33.7`，Node `22`）
 > **延伸导航**：[架构知识库总览](./docs/architecture/README.md) · [文档首页](./docs/README.md) · [贡献指南](./CONTRIBUTING.md)
 
 本文件面向后续维护者与 AI 编程代理，提供 TraceMemo 全仓的架构定位、技术栈、核心目录地图、知识库专题路由、高频命令、常用环境变量及关键工程红线。

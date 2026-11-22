@@ -20,8 +20,15 @@
 ## 日报与自动化
 
 - [群聊日报](./user-guide/report.md)：手动生成今日、昨日或近 7 天的群聊报告，也可以在「自动化」里创建定时日报。
-- 「自动化」按三类规则执行：**@我生成日报**、**定时日报**、**退群通知**。定时日报会依次生成报告、保存 Report History，再按当前微信发送能力尝试通知；发送失败时可复用已有 PNG 重试。
+- 「自动化」规则按三类执行：**@我生成日报**、**定时日报**、**退群通知**。定时日报会依次生成报告、保存 Report History，再按当前微信发送能力尝试通知；发送失败时可复用已有 PNG 重试。
+- 「自动化」页同时提供两个 **微信消息插入开关**（依赖微信数据库连接及原生写入组件）：
+  - **微信内防撤回提示**：别人撤回消息时，在微信会话里保留原消息并提示撤回内容（与旧版已下线的 TraceMemo 内置防撤回归档不同，该开关通过原生辅助程序写入微信消息分片规则生效）。
+  - **微信内退群监控消息**：任意群有人退出时，在微信会话里插入一条退出提示（作用范围为全部群聊；自动化里的「退群通知」规则仍按退群监控勾选的目标群生效）。
 - 自动发送和监控动作通过统一执行边界，并保留执行记录；简要说明见[产品工作方式](./concepts/how-it-works.md#动作执行与审计)。
+
+## 扩展中心
+
+- [扩展中心使用指南](./user-guide/extensions.md)：从官方模板画廊、本地目录或 ZIP 安装扩展，查看高/中/低风险权限并手动授权、启停或卸载（卸载默认保留扩展私有数据）。如需二次开发扩展，请见下方「开发文档」中的扩展开发系列文档。
 
 ## 退群监控
 
@@ -51,7 +58,7 @@ Agent Hub 让微信机器人调用本机 TraceMemo；Reader Skill / Local HTTP A
 
 ## 开发文档
 
-- [架构知识库总览（源码基线 8f47dca）](./architecture/README.md)
+- [架构知识库总览（源码基线 9efb8ac）](./architecture/README.md)
 - [开发、测试与构建](./development/overview.md)
 - [Local HTTP API / Agent API 能力审计](./development/agent-api-capability-audit.md)
 - [扩展中心架构（v1）](./extensions/architecture.md)
@@ -73,9 +80,11 @@ Agent Hub 让微信机器人调用本机 TraceMemo；Reader Skill / Local HTTP A
 - [微信分享卡片自动部署 Skill](./skill/setup-wechat-share-card/SKILL.md)
 - [TraceMemo Reader Skill 文件](./skill/tracememo-reader/SKILL.md)
 
-## 版本说明
+## 历史迁移说明
+
+> 以下仅保留涉及品牌更名或安全鉴权等破坏性变更的迁移公告；完整版本更新日志请查看 GitHub Releases。
 
 - [v2.2.0 品牌与安全迁移](./agent/release-notes-v2.2.0.md)
 - [v2.1.9 API 鉴权迁移](./agent/release-notes-v2.1.9.md)
 
-文档按当前 develop 已实现的能力维护，不在首页固定写死版本号。版本兼容性、AI Provider 行为和媒体读取结果可能随系统、微信客户端和服务商变化。
+文档按当前已实现的能力维护，不在文档首页硬编码小版本号。版本兼容性、AI Provider 行为和媒体读取结果可能随系统、微信客户端和服务商变化。

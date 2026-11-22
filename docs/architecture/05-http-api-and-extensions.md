@@ -1,6 +1,6 @@
 # 05. Local HTTP API、扩展系统与云端分享服务
 
-> **源码基线**：`8f47dca`（`package.json` 版本 `2.7.0`）｜**适用范围**：Local HTTP API（`127.0.0.1:6131`）、`packages/extension-sdk/`、Extension Center（`src/main/extensions/` 21 文件 + `src/shared/extensions/` 10 文件 + 渲染端宿主与规则集成）、`examples/extensions/` 模板体系与 `services/share-card-worker/` Cloudflare Worker 服务
+> **源码基线**：`9efb8ac`（`package.json` 版本 `2.7.0`）｜**适用范围**：Local HTTP API（`127.0.0.1:6131`）、`packages/extension-sdk/`、Extension Center（`src/main/extensions/` 21 文件 + `src/shared/extensions/` 10 文件 + 渲染端宿主与规则集成）、`examples/extensions/` 模板体系与 `services/share-card-worker/` Cloudflare Worker 服务
 
 ---
 

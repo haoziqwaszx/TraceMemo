@@ -1,6 +1,6 @@
 # 03. 本地知识库、多模态索引与 AI 检索双引擎
 
-> **源码基线**：`8f47dca`｜**适用范围**：`src/main/knowledge/`（9 文件）、`src/main/voice-pipeline/`（17 文件）、System OCR 与图片文字索引（`src/main/services/system-ocr-service.ts`、`src/main/services/image-text-index-service.ts`、`src/main/services/image-text-index-store.ts`）、本地查询与 AI 检索双引擎（`LocalQueryApiService`、`QueryAgentService`、`AskWechatService`、`AiSearchPipelineService`）以及 CLI POC 链路
+> **源码基线**：`9efb8ac`｜**适用范围**：`src/main/knowledge/`（9 文件）、`src/main/voice-pipeline/`（17 文件）、System OCR 与图片文字索引（`src/main/services/system-ocr-service.ts`、`src/main/services/image-text-index-service.ts`、`src/main/services/image-text-index-store.ts`）、本地查询与 AI 检索双引擎（`LocalQueryApiService`、`QueryAgentService`、`AskWechatService`、`AiSearchPipelineService`）以及 CLI POC 链路
 
 ---
 

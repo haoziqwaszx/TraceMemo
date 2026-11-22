@@ -1,6 +1,6 @@
 # 渲染进程、共享契约与 IPC 通信全景
 
-> **源码基线**：Git commit `8f47dca`（`package.json` `version: 2.7.0`）
+> **源码基线**：Git commit `9efb8ac`（`package.json` `version: 2.7.0`）
 > **覆盖范围**：`src/renderer/`（272 个文件）、`src/shared/`（75 个文件）、`src/preload/`（2 个文件）、`src/env.d.ts`，以及主进程侧 `ipcMain` / `webContents.send` / `event.sender.send` 注册点与隔离协议实现。
 > **关联文档**：[知识库总览](./README.md) · [系统总览](./01-system-overview.md) · [主进程与数据层](./02-main-process-and-data.md) · [构建、脚本与打包](./07-build-scripts-and-packaging.md) · [测试与质量门禁](./08-testing-and-quality-gates.md)
 
@@ -295,7 +295,7 @@ TraceMemo 正在从早期全手写 SCSS 渐进演进至 Tailwind CSS + Radix UI�
 
 ### 5.1 已核实的真实类型偏差与遗留点（修改时务必注意）
 
-在基线 `8f47dca` 中，源码存在以下 **5 处真实的类型漂移或历史遗留**，后续扩展字段或重构 IPC 时应优先注意（或顺带收敛）：
+在基线 `9efb8ac` 中，源码存在以下 **5 处真实的类型漂移或历史遗留**，后续扩展字段或重构 IPC 时应优先注意（或顺带收敛）：
 
 1. **`AppSettings` 在 `src/preload/index.d.ts` 中内联手写导致严重缺字段**
    - 权威定义：`src/main/services/settings-store.ts:25–70` 定义 `AppSettings` 共 **23 个字段**；主进程 `settings:get`、`settings:set` 与 `key:autoGetImageKey` 返回的均为 `getLegacySettingsView()`（完整 `AppSettings`）。

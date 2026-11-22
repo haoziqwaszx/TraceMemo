@@ -1,12 +1,12 @@
 # 01. 系统架构总览
 
-> **源码基线**：`8f47dca`（`package.json` 版本 `2.7.0`）｜**适用范围**：仓库全景、技术栈、多进程/线程拓扑、构建入口澄清与全局设计原则
+> **源码基线**：`9efb8ac`（`package.json` 版本 `2.7.0`）｜**适用范围**：仓库全景、技术栈、多进程/线程拓扑、构建入口澄清与全局设计原则
 
 ---
 
 ## 1. 架构总览
 
-TraceMemo（迹忆，原名 `WechatExplorer`）是一款**本地优先、可追溯的 AI 微信知识与分析桌面工作台**，围绕 WeChat 4.0（`xwechat_files`）本地加密数据构建归档浏览、全文与语义检索、群聊日报、退群监控、防回环自动化、个人微信/iLink 双通道发送、受鉴权本地 HTTP API 以及沙箱扩展生态。
+TraceMemo（迹忆，原名 `WechatExplorer`）是一款**本地优先、可追溯的 AI 微信知识与分析桌面工作台**，围绕 WeChat 4.x（`xwechat_files`）本地加密数据构建归档浏览、全文与语义检索、群聊日报、退群监控、防回环自动化、个人微信/iLink 双通道发送、受鉴权本地 HTTP API 以及沙箱扩展生态。
 
 从运行时进程模型看，系统以 **Electron 43 主进程** 为调度与安全边界核心，向上通过 **Preload (`contextBridge`)** 向 **React 19 渲染进程** 暴露统一能力接口，向下通过 **Koffi FFI + 原生 Helper 进程 + Node `fork` Worker + `worker_threads`** 隔离所有高风险、CPU 密集或阻塞型操作：
 
@@ -32,11 +32,12 @@ TraceMemo（迹忆，原名 `WechatExplorer`）是一款**本地优先、可追�
 |  - 密钥提取 (Win wx_key.dll / Mac xkey_helper & intel_mac_key_helper)   |
 |  - QueryAgent / AI Search / GroupReport / Automation / SendGateway      |
 |  - Local HTTP API (127.0.0.1:6131) & WechatConnectorService (iLink)     |
-+---+--------------------+--------------------+-------------------+-------+
-    | Node fork          | worker_threads     | spawn (短命/守护) | 外部服务
-    | (ELECTRON_RUN_     | (eval: true)       |                   |
-    |  AS_NODE=1)        |                    |                   |
-    v                    v                    v                   v
++-------------------------------------------------------------------------+
+         |                     |                     |                     |
+         | Node fork           | worker_threads      | spawn (helper)      | External
+         | (ELECTRON_RUN_      | (eval: true)        | short/daemon        | Service
+         |  AS_NODE=1)         |                     |                     |
+         v                     v                     v                     v
 +-------------------+ +-----------------+ +-------------------+ +-------------------+
 | knowledgeWorker   | | 图片解密线程     | | tm-wcdb-config-   | | Cloudflare Worker |
 | (node:sqlite FTS5)| | (AES-128-ECB +  | | helper (stdin JSON| | services/share-   |
@@ -134,7 +135,7 @@ TraceMemo（迹忆，原名 `WechatExplorer`）是一款**本地优先、可追�
 
 1. **本地优先与只读隔离（不破坏微信原库）**：
    - 主进程中 `Wcdb4Client` 对微信原库（`db_storage/session/session.db`、`message_*.db` 等）严格保持只读消费心智。所有派生索引（FTS5 `knowledge.sqlite`、OCR `image-text-index`、语音转写 `voice-transcripts.sqlite`、解密图片磁盘缓存）全部落在 TraceMemo 自身的 `userData` 目录内。
-   - 少数确需向微信分片写入配置/提示的场景（如防撤回规则开关、退群本地提示），由于 WCDB `CommonCore` 按路径池化底层对象且只读标记不可逆（同进程写入会触发 `-3004`），系统强制派生短命的 `tm-wcdb-config-helper` 子进程完成写入并立即销毁连接池，且密钥仅经 `stdin` 传递。
+   - 少数确需向微信分片写入配置/提示的场景（如自动化页的「微信内防撤回提示」开关 `recall_notice`、「微信内退群监控消息」开关 `group_exit_notice` 与退群本地提示；与已下线的旧 `recallProtectionEnabled` 内置防撤回归档服务无关），由于 WCDB `CommonCore` 按路径池化底层对象且只读标记不可逆（同进程写入会触发 `-3004`），系统强制派生短命的 `tm-wcdb-config-helper` 子进程完成写入并立即销毁连接池，且密钥仅经 `stdin` 传递。
 2. **高风险原生逻辑与不可信扩展的进程/线程隔离**：
    - macOS 发送能力核心 `libtmwechat.dylib` 隔离在独立进程 `tm-wechat-host` 中，通过 `127.0.0.1` HTTP 通信；
    - 第三方扩展的后台逻辑隔离在每扩展一个的 Node 子进程 `extensionHost` 中，扩展 UI 运行于无 Preload、禁用 `connect-src` 的 `iframe` 中，仅允许 `postMessage` 白名单请求；
